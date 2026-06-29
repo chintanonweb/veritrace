@@ -191,7 +191,8 @@ veritrace/
 │  ├─ score/       ✅ Verified AI Score — per-agent reliability from verified receipts (tested)
 │  └─ sdk-py/      ⏳ PyPI: veritrace
 ├─ apps/web/       ✅ Next.js ingestion API + receipt ledger + public verify pages
-├─ workers/        ⏳ eval (LLM-judge), anchor (Arweave + L2), search, graph jobs
+├─ workers/
+│  └─ eval-judge/  ✅ LLM-as-judge scoring, deployable on Nosana decentralized GPU
 └─ README.md
 ```
 
@@ -223,13 +224,14 @@ cd packages/core && pnpm test    # 14 passing
 
 ## Status
 
-- ✅ Monorepo scaffolded (pnpm workspace), **56/56 tests passing**, web app builds clean
+- ✅ Monorepo scaffolded (pnpm workspace), **64/64 tests passing**, web app builds clean
 - ✅ `@veritrace/core` — canonicalization, Ed25519 sign/verify, Merkle proofs
 - ✅ `@veritrace/sdk` — `wrap()` → signed receipts
 - ✅ `@veritrace/anchor` — Merkle-batch + pluggable publish (local / Arweave / Base Sepolia)
 - ✅ `@veritrace/verifier` — independent verify lib + `veritrace-verify` CLI
 - ✅ `@veritrace/score` — Verified AI Score leaderboard (per-agent reliability)
 - ✅ `@veritrace/web` — ingestion API, receipt ledger, leaderboard, public verify pages (no DB)
+- ✅ `@veritrace/eval-judge` — LLM-as-judge worker, deployable on Nosana decentralized GPU
 - ✅ Runnable end-to-end demo (`pnpm demo`)
 - ⏳ Live Arweave/chain anchoring (credential-gated) · Postgres persistence · `sdk-py`
 
