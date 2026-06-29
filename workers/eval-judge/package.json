@@ -1,0 +1,22 @@
+{
+  "name": "@veritrace/eval-judge",
+  "version": "0.0.1",
+  "description": "VeriTrace eval-judge — an LLM-as-judge that scores AI decisions for correctness, deployable on Nosana decentralized GPU compute.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": {
+    "test": "vitest run",
+    "start": "tsx src/server.ts"
+  },
+  "dependencies": {
+    "@veritrace/core": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,23 @@
+{
+  "version": "0.1",
+  "type": "container",
+  "meta": {
+    "trigger": "dashboard",
+    "system_requirements": { "required_vram": 16 }
+  },
+  "ops": [
+    {
+      "type": "container/run",
+      "id": "veritrace-eval-judge",
+      "args": {
+        "image": "ollama/ollama:latest",
+        "gpu": true,
+        "expose": 11434,
+        "entrypoint": ["/bin/sh", "-c"],
+        "cmd": [
+          "ollama serve & sleep 5 && ollama pull qwen2.5:7b && wait"
+        ]
+      }
+    }
+  ]
+}
