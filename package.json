@@ -1,0 +1,16 @@
+{
+  "name": "veritrace",
+  "private": true,
+  "version": "0.0.1",
+  "description": "The flight recorder for AI agents — cryptographic receipts for every decision your AI makes.",
+  "type": "module",
+  "scripts": {
+    "test": "pnpm -r test",
+    "build": "pnpm -r build",
+    "demo": "tsx examples/refund-demo.mjs"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0"
+  },
+  "license": "MIT"
+}

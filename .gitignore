@@ -1,0 +1,10 @@
+node_modules/
+dist/
+examples/out/
+.next/
+.playwright-mcp/
+*.tsbuildinfo
+*.log
+.env
+.env.local
+.DS_Store
