@@ -1,4 +1,4 @@
-import { VeriTrace, generateKeypair } from "@veritrace/sdk";
+import { VeriTrace } from "@veritrace/sdk";
 import { anchorBatch, LocalAnchorBackend } from "@veritrace/anchor";
 import { sha256Hex, type EvalVerdict, type ReceiptRecord } from "@veritrace/core";
 import { ReceiptStore } from "./store";
@@ -41,7 +41,11 @@ async function build(): Promise<ReceiptStore> {
   const signed: ReceiptRecord[] = [];
 
   for (const spec of SPECS) {
-    const { privateKey } = generateKeypair();
+    // Deterministic per-agent key. `generateKeypair()` would mint a fresh random
+    // key on every cold start, so receipt ids (which are content-addressed over
+    // receipt + signature) would change on every deploy and any shared /r/<id>
+    // link would 404. Deriving from the agent name keeps demo links stable.
+    const privateKey = sha256Hex(`veritrace-demo-key:${spec.agent}`);
     const vt = new VeriTrace({ privateKey, agent: spec.agent, now: () => "2026-06-24T09:31:00.000Z" });
     const run = vt.wrap(async (i: number) => ({ ok: true, seq: i }), {
       action: spec.action,
