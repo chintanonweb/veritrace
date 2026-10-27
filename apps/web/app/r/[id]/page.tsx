@@ -19,12 +19,28 @@ export default async function VerifyPage({ params }: { params: Promise<{ id: str
   const r = record.receipt;
   const anchor = record.anchor;
 
+  // Point at the counterpart so a first-time visitor can see a pass and a fail
+  // side by side. Found by checking, not by hard-coding an id.
+  const others = store.list().filter((s) => s.id !== id);
+  const counterpart = v.ok
+    ? others.find((s) => !verifyRecord(s.record).ok)
+    : others.find((s) => verifyRecord(s.record).ok);
+
   return (
     <div className="wrap">
       <header className="top">
         <div className="brand"><span className="dot" /> VeriTrace</div>
         <div className="meta">public receipt · {id}</div>
       </header>
+
+      <div className="explainer">
+        <b>What you’re looking at:</b> a receipt for one AI decision. The paper on the left is the
+        receipt itself; the panel on the right re-checks it from scratch, without asking us
+        anything. <span className="term">Signature</span> — the wax seal, proving nothing changed
+        after signing. <span className="term">Merkle inclusion</span> — proof this receipt belongs
+        to a batch whose summary was published. <span className="term">Verdict signature</span> —
+        a second, separate seal on the line that says whether the AI was right.
+      </div>
 
       <div className="stage">
         {/* ── the receipt ── */}
@@ -90,6 +106,7 @@ export default async function VerifyPage({ params }: { params: Promise<{ id: str
             </span>
           </div>
           {record.verdict && (
+            <>
             <div className="check">
               <span className={`ic ${v.checks.verdict ? "ok" : "bad"}`}>
                 {v.checks.verdict ? "✓" : "✗"}
@@ -103,6 +120,14 @@ export default async function VerifyPage({ params }: { params: Promise<{ id: str
                 </small>
               </span>
             </div>
+            {v.checks.verdict && record.verdict.assessment !== "correct" && (
+              <p className="vnote">
+                Not a contradiction: the record is intact, and the judge’s own signed opinion is
+                that the AI got it wrong. VeriTrace proves both — it never asks you to trust the
+                AI instead.
+              </p>
+            )}
+            </>
           )}
           <div className="check">
             <span className={`ic ${anchor?.arweaveTxId ? "ok" : "wait"}`}>{anchor?.arweaveTxId ? "✓" : "○"}</span>
@@ -121,7 +146,14 @@ export default async function VerifyPage({ params }: { params: Promise<{ id: str
         </aside>
       </div>
 
-      <Link className="back" href="/">← back to the ledger</Link>
+      <div className="pager">
+        <Link className="back" href="/">← back to the ledger</Link>
+        {counterpart && (
+          <Link className={`compare ${v.ok ? "bad" : "ok"}`} href={`/r/${counterpart.id}`}>
+            {v.ok ? "Compare with the tampered copy →" : "Compare with a genuine copy →"}
+          </Link>
+        )}
+      </div>
 
       <footer>VeriTrace · the record is cryptographically certain; the verdict is transparent and re-runnable.</footer>
     </div>

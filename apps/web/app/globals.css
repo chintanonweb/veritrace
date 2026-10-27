@@ -180,3 +180,61 @@ footer { border-top: 1px solid var(--line); padding: 30px 0 60px; color: var(--m
 .btn:hover { border-color: var(--signal-dim); color: var(--signal); }
 .btn.solid { background: var(--signal); color: #04140d; border-color: var(--signal); font-weight: 600; }
 .btn.solid:hover { box-shadow: 0 0 24px -4px var(--signal); color: #04140d; }
+
+/* ── how it works (3 steps) ─────────────────────────── */
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+@media (max-width: 860px) { .steps { grid-template-columns: 1fr; } }
+.step {
+  border: 1px solid var(--line); border-radius: 12px; background: var(--panel);
+  padding: 20px 18px; position: relative; overflow: hidden;
+}
+.step::after {
+  content: ""; position: absolute; inset: 0 0 auto 0; height: 2px;
+  background: linear-gradient(90deg, var(--signal-dim), transparent);
+}
+.step .num { font-size: 11px; letter-spacing: 0.18em; color: var(--signal); font-weight: 600; }
+.step h3 { font-family: var(--display); font-weight: 700; font-size: 17px; letter-spacing: -0.01em; margin: 9px 0 8px; }
+.step p { color: var(--muted); font-size: 13.5px; line-height: 1.6; margin: 0; }
+.step p b { color: var(--fg); font-weight: 500; }
+
+/* ── try-it cards ───────────────────────────────────── */
+.trygrid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 720px) { .trygrid { grid-template-columns: 1fr; } }
+.trycard {
+  display: block; border: 1px solid var(--line); border-radius: 12px; background: var(--panel);
+  padding: 20px 18px; transition: transform 0.15s, border-color 0.15s, background 0.15s;
+}
+.trycard:hover { transform: translateY(-2px); background: var(--panel-2); }
+.trycard.ok:hover { border-color: rgba(52, 230, 160, 0.5); }
+.trycard.bad:hover { border-color: rgba(255, 93, 82, 0.5); }
+.trycard .tagok, .trycard .tagbad { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 600; }
+.trycard .tagok { color: var(--signal); }
+.trycard .tagbad { color: var(--alarm); }
+.trycard h3 { font-family: var(--display); font-weight: 700; font-size: 18px; letter-spacing: -0.01em; margin: 8px 0 8px; }
+.trycard p { color: var(--muted); font-size: 13.5px; line-height: 1.6; margin: 0 0 14px; }
+.trycard .go { font-size: 13px; font-weight: 600; }
+.trycard.ok .go { color: var(--signal); }
+.trycard.bad .go { color: var(--alarm); }
+
+.hint { color: var(--muted); font-size: 12.5px; line-height: 1.6; margin-top: 12px; max-width: 78ch; }
+.hint b { color: var(--fg); font-weight: 500; }
+
+/* ── receipt page explainer ─────────────────────────── */
+.explainer {
+  border: 1px solid var(--line); border-left: 2px solid var(--signal-dim);
+  background: var(--panel); border-radius: 10px; padding: 16px 18px; margin-top: 26px;
+  font-size: 13.5px; color: var(--muted); line-height: 1.65;
+}
+.explainer b { color: var(--fg); font-weight: 600; }
+.explainer .term { color: var(--fg); }
+.explainer + .stage { padding-top: 30px; }
+
+.pager { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 30px; }
+.pager .back { margin: 0; }
+.compare { font-size: 12.5px; border: 1px solid var(--line); border-radius: 999px; padding: 9px 16px; color: var(--muted); transition: all 0.15s; }
+.compare.ok:hover { border-color: var(--signal); color: var(--signal); }
+.compare.bad:hover { border-color: var(--alarm); color: var(--alarm); }
+.btn.warn { border-color: rgba(255, 93, 82, 0.34); color: var(--alarm); }
+.btn.warn:hover { border-color: var(--alarm); color: var(--alarm); box-shadow: 0 0 20px -6px var(--alarm); }
+.btn.warn { background: rgba(255, 93, 82, 0.08); border-color: rgba(255, 93, 82, 0.45); }
+.vnote { margin: 10px 0 2px; padding: 10px 12px; border-left: 2px solid var(--amber); background: rgba(255, 180, 84, 0.06); border-radius: 0 6px 6px 0; color: var(--muted); font-size: 12px; line-height: 1.6; }

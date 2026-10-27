@@ -4,7 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "VeriTrace — verifiable receipts for AI agents",
   description:
-    "Stripe receipts for AI agents. Tamper-proof, independently verifiable proof of exactly what your AI did.",
+    "Every AI decision gets a receipt that can't be quietly edited, and anyone can check it in seconds. Open-source demo, no account required.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
