@@ -94,7 +94,14 @@ export default async function VerifyPage({ params }: { params: Promise<{ id: str
 
           <div className="check">
             <span className={`ic ${v.checks.signature ? "ok" : "bad"}`}>{v.checks.signature ? "✓" : "✗"}</span>
-            <span className="lbl">Signature<small>Ed25519 — authentic & untampered</small></span>
+            <span className="lbl">
+              Signature
+              <small>
+                {v.checks.signature
+                  ? "Ed25519 — authentic & untampered"
+                  : "the signature does not match this receipt’s contents"}
+              </small>
+            </span>
           </div>
           <div className="check">
             <span className={`ic ${v.checks.anchored ? "ok" : anchor ? "bad" : "wait"}`}>
@@ -102,7 +109,13 @@ export default async function VerifyPage({ params }: { params: Promise<{ id: str
             </span>
             <span className="lbl">
               Merkle inclusion
-              <small>{anchor ? "provably part of an anchored batch" : "not yet anchored"}</small>
+              <small>
+                {!anchor
+                  ? "not yet anchored"
+                  : v.checks.anchored
+                    ? "provably part of an anchored batch"
+                    : "this receipt does not match the published batch root"}
+              </small>
             </span>
           </div>
           {record.verdict && (
