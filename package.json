@@ -9,7 +9,8 @@
     "build": "pnpm -r build",
     "demo": "tsx examples/refund-demo.mjs",
     "anchor:init": "tsx scripts/anchor-init.mjs",
-    "anchor:arweave": "tsx scripts/anchor-receipt-arweave.mjs"
+    "anchor:arweave": "tsx scripts/anchor-receipt-arweave.mjs",
+    "judge:smoke": "tsx scripts/judge-smoke.mjs"
   },
   "devDependencies": {
     "@ardrive/turbo-sdk": "^2.1.2",
