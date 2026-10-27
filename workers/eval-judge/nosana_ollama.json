@@ -1,0 +1,46 @@
+{
+  "version": "0.1",
+  "type": "container",
+  "meta": {
+    "trigger": "dashboard",
+    "system_requirements": { "required_vram": 8 }
+  },
+  "ops": [
+    {
+      "type": "container/run",
+      "id": "judge-llm",
+      "args": {
+        "image": "docker.io/ollama/ollama:0.35.1",
+        "gpu": true,
+        "cmd": ["serve"],
+        "expose": [
+          {
+            "port": 11434,
+            "health_checks": [
+              {
+                "type": "http",
+                "path": "/api/tags",
+                "method": "GET",
+                "expected_status": 200,
+                "continuous": true
+              }
+            ]
+          }
+        ]
+      },
+      "execution": { "group": "llm" }
+    },
+    {
+      "type": "container/run",
+      "id": "model-pull",
+      "args": {
+        "image": "curlimages/curl:latest",
+        "entrypoint": ["/bin/sh", "-c"],
+        "cmd": [
+          "curl -sS -X POST http://judge-llm:11434/api/pull -d '{\"name\":\"qwen2.5:7b\",\"stream\":false}' && echo model-ready"
+        ]
+      },
+      "execution": { "group": "llm", "depends_on": ["judge-llm"] }
+    }
+  ]
+}

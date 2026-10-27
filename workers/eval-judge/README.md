@@ -66,3 +66,29 @@ To deploy:
 > before exposing it publicly, or a stranger's traffic will burn your credits.
 
 Env: `EVAL_LLM_BASE_URL`, `EVAL_LLM_MODEL`, `EVAL_LLM_API_KEY` (optional), `PORT`, `EVAL_JUDGE_NAME`.
+
+### If you haven't published the judge image
+
+The third op in `nosana_job.json` runs `docker.io/chintanonweb/veritrace-eval-judge`.
+That image only exists once **you** build and push it (step 1 above). A deployment
+posted without it will fail on that op.
+
+For a run that needs no image build at all, deploy **`nosana_ollama.json`** instead —
+two ops, Ollama on GPU plus a model pull, nothing custom, ~8 GB VRAM — then point the
+judge at the public endpoint from wherever it runs:
+
+```bash
+EVAL_LLM_BASE_URL=https://<your-endpoint>/v1 \
+EVAL_LLM_MODEL=qwen2.5:7b \
+pnpm judge:smoke
+```
+
+Be precise about what that proves: **the model inference ran on Nosana GPU**, and the
+verdict it returned was signed into a receipt on the calling side. It does **not** prove
+the judge *service* is hosted on Nosana — for that you need the image published and the
+three-op job.
+
+Cost note: Ollama pulling a 7B model takes a few minutes of GPU time. Use deployment
+strategy **Simple** (not Infinite), Replica Count **1**, and a short container timeout,
+then stop the deployment when you have your evidence. A 24 GB GPU market at ~$0.48/hr
+left running for a month is ~$350; twenty minutes is a few cents.
