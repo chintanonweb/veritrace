@@ -160,9 +160,14 @@ pnpm --filter @veritrace/web dev   # → http://localhost:3000
 
 A public **receipt ledger** with live verification, and a shareable verify page (`/r/<id>`) that renders each AI decision as a tamper-proof receipt with an independent verdict — including a deliberately **altered** one that fails:
 
-| Receipt ledger | Verified ✅ | Altered ❌ |
-|---|---|---|
-| ![home](docs/screenshot-home.png) | ![verified](docs/screenshot-verified.png) | ![altered](docs/screenshot-altered.png) |
+| Verified ✅ — receipt + signed verdict | Altered ❌ — three checks fail |
+|---|---|
+| ![verified](docs/screenshot-verified.png) | ![altered](docs/screenshot-altered.png) |
+
+Note the row that catches people: a receipt can read **Verified** while its verdict says
+`incorrect`. Integrity and correctness are separate axes — the record is genuine, and the
+judgment attached to it says the AI got it wrong. Flip the verdict and it breaks its own
+signature without touching the receipt signature at all.
 
 ---
 
