@@ -8,16 +8,67 @@
   "ops": [
     {
       "type": "container/run",
-      "id": "veritrace-eval-judge",
+      "id": "judge-llm",
       "args": {
         "image": "ollama/ollama:latest",
         "gpu": true,
-        "expose": 11434,
+        "cmd": ["serve"],
+        "expose": [
+          {
+            "port": 11434,
+            "health_checks": [
+              {
+                "type": "http",
+                "path": "/api/tags",
+                "method": "GET",
+                "expected_status": 200,
+                "continuous": true
+              }
+            ]
+          }
+        ]
+      },
+      "execution": { "group": "llm" }
+    },
+    {
+      "type": "container/run",
+      "id": "model-pull",
+      "args": {
+        "image": "curlimages/curl:latest",
         "entrypoint": ["/bin/sh", "-c"],
         "cmd": [
-          "ollama serve & sleep 5 && ollama pull qwen2.5:7b && wait"
+          "curl -sS -X POST http://judge-llm:11434/api/pull -d '{\"name\":\"qwen2.5:7b\",\"stream\":false}' && echo model-ready"
         ]
-      }
+      },
+      "execution": { "group": "llm", "depends_on": ["judge-llm"] }
+    },
+    {
+      "type": "container/run",
+      "id": "eval-judge",
+      "args": {
+        "image": "docker.io/chintanonweb/veritrace-eval-judge:latest",
+        "env": {
+          "EVAL_LLM_BASE_URL": "http://judge-llm:11434/v1",
+          "EVAL_LLM_MODEL": "qwen2.5:7b",
+          "EVAL_JUDGE_NAME": "qwen2.5-7b-judge",
+          "PORT": "8088"
+        },
+        "expose": [
+          {
+            "port": 8088,
+            "health_checks": [
+              {
+                "type": "http",
+                "path": "/health",
+                "method": "GET",
+                "expected_status": 200,
+                "continuous": true
+              }
+            ]
+          }
+        ]
+      },
+      "execution": { "group": "judge", "depends_on": ["judge-llm", "model-pull"] }
     }
   ]
 }

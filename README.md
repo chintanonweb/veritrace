@@ -4,11 +4,11 @@
 
 ### Stripe Receipts for AI Agents
 
-**When an AI agent approves a refund, changes production code, or executes a trade, VeriTrace creates independently verifiable proof of exactly what happened — and whether it was right.**
+**When an AI agent approves a refund, changes production code, or executes a trade, VeriTrace creates independently verifiable proof of exactly what happened — and a separately signed verdict on whether it was right.**
 
 Payments have receipts. AI decisions should too.
 
-[![tests](https://img.shields.io/badge/tests-64%2F64_passing-brightgreen)](#status)
+[![tests](https://img.shields.io/badge/tests-75%2F75_passing-brightgreen)](#status)
 [![CI](https://github.com/chintanonweb/veritrace/actions/workflows/ci.yml/badge.svg)](https://github.com/chintanonweb/veritrace/actions/workflows/ci.yml)
 [![live demo](https://img.shields.io/badge/live_demo-veritrace--pearl.vercel.app-000)](https://veritrace-pearl.vercel.app/)
 [![license](https://img.shields.io/badge/license-MIT-blue)](#license)
@@ -46,7 +46,9 @@ These aren't logging niceties. They're **money lost, disputes, and liability** �
 
 ## Not just *what* happened — *whether it was correct*
 
-Most tools log the action. VeriTrace also attaches a **signed evaluation verdict** to each receipt: an automated correctness check (LLM-judge today, pluggable), with a confidence score, signed so it can't be quietly rewritten later.
+Most tools log the action. VeriTrace also attaches a **signed evaluation verdict** to each receipt: an automated correctness check (LLM-judge today, pluggable) with a confidence score.
+
+The verdict is signed **by the judge's key, over that specific receipt** — a different key from the agent's. So a verdict cannot be flipped from `incorrect` to `correct`, cannot have its confidence nudged, and cannot be replayed onto a different receipt. The anchored Merkle leaf folds the verdict in, so once published, the judgment is bound to the permanent root too. That property is covered by tests and demonstrated in `pnpm demo`.
 
 ```jsonc
 {
@@ -142,7 +144,13 @@ You'll see a real AI refund decision get a **signed receipt**, verify ✅, then 
   $ veritrace-verify receipt.tampered.json
   ❌ FAILED — signature bad
   → Tampering is mathematically detectable. The record can't be quietly rewritten.
+
+  Someone flips the verdict from "correct" to "incorrect"…
+  ❌ FAILED — verdict signature invalid
+  → The judgment is signed separately, so it can't be rewritten either.
 ```
+
+The demo exits non-zero unless **both** tampering attempts are caught.
 
 ### Or open the web app
 
@@ -207,7 +215,7 @@ Anyone verifies it — no VeriTrace account needed:
 veritrace-verify receipt.json   # ✅ signature ok  ·  ⚪ anchored (Arweave + chain: roadmap)
 ```
 
-> ✅ **Status:** signing, the `wrap()` SDK, **Merkle anchoring + inclusion proofs**, and independent verification are implemented and tested (**64/64**). Receipts anchor to **Arweave for real and for free** via the Turbo backend — no AR tokens needed, because Merkle-root payloads sit far below Turbo's 105 KiB free tier. The verifier's `--online` mode fetches the published root back from a public gateway and compares it to the receipt, so "anchored" means *confirmed against the network*, not asserted by us. On-chain roots (Base Sepolia) remain implemented but credential-gated.
+> ✅ **Status:** signing, the `wrap()` SDK, **Merkle anchoring + inclusion proofs**, and independent verification are implemented and tested (**75/75**). Receipts anchor to **Arweave for real and for free** via the Turbo backend — no AR tokens needed, because Merkle-root payloads sit far below Turbo's 105 KiB free tier. The verifier's `--online` mode fetches the published root back from a public gateway and compares it to the receipt, so "anchored" means *confirmed against the network*, not asserted by us. On-chain roots (Base Sepolia) remain implemented but credential-gated.
 >
 > 🧪 **Live demo:** [veritrace-pearl.vercel.app](https://veritrace-pearl.vercel.app/) — the ledger is seeded with **synthetic receipts** (`apps/web/lib/seed.ts`) so the UI has data to show; the signatures, Merkle proofs and scores on them are computed for real, but the underlying decisions are generated, not customer traffic. Anchoring is real.
 
@@ -258,7 +266,8 @@ cd packages/core && pnpm test    # 14 passing
 
 ## Status
 
-- ✅ Monorepo scaffolded (pnpm workspace), **64/64 tests passing**, web app builds clean
+- ✅ Monorepo scaffolded (pnpm workspace), **75/75 tests passing**, web app builds clean
+- ✅ **Verdicts signed separately by the judge key** — flipping an assessment fails verification
 - ✅ `@veritrace/core` — canonicalization, Ed25519 sign/verify, Merkle proofs
 - ✅ `@veritrace/sdk` — `wrap()` → signed receipts
 - ✅ `@veritrace/anchor` — Merkle-batch + pluggable publish (local / Arweave / Base Sepolia)

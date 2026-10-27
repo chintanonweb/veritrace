@@ -1,6 +1,12 @@
 import { VeriTrace } from "@veritrace/sdk";
 import { anchorBatch, LocalAnchorBackend } from "@veritrace/anchor";
-import { sha256Hex, type EvalVerdict, type ReceiptRecord } from "@veritrace/core";
+import {
+  sha256Hex,
+  signVerdict,
+  ed25519PublicKey,
+  type EvalVerdict,
+  type ReceiptRecord,
+} from "@veritrace/core";
 import { ReceiptStore } from "./store";
 
 /**
@@ -53,8 +59,21 @@ async function build(): Promise<ReceiptStore> {
       modelVersion: spec.modelVersion,
       traceId: `${spec.agent}-run`,
     });
+    // The judge is a separate identity from the agent: it signs its own verdict
+    // so a verdict can't be swapped for a friendlier one without detection.
+    const judgeKey = sha256Hex(`veritrace-demo-judge:${spec.agent}`);
+    const judgePub = ed25519PublicKey(judgeKey);
+
     for (let i = 0; i < spec.count; i++) await run(i);
-    vt.drain().forEach((r, i) => signed.push({ ...r, verdict: verdictFor(i, spec.incorrectEvery) }));
+    vt.drain().forEach((r, i) => {
+      const verdict = verdictFor(i, spec.incorrectEvery);
+      signed.push({
+        ...r,
+        verdict,
+        verdictSignature: signVerdict(r.receipt, verdict, judgeKey),
+        verdictPublicKey: judgePub,
+      });
+    });
   }
 
   const anchored = await anchorBatch(signed, new LocalAnchorBackend());

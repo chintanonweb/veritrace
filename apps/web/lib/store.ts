@@ -1,9 +1,9 @@
-import { sha256Hex, receiptLeaf, type ReceiptRecord } from "@veritrace/core";
+import { sha256Hex, recordLeaf, type ReceiptRecord } from "@veritrace/core";
 
 /** Content-addressed id: derived from the receipt + signature, so the URL
  *  itself can't be repointed at a different receipt. */
 export function receiptId(record: ReceiptRecord): string {
-  return "rcpt_" + sha256Hex(receiptLeaf(record.receipt) + record.signature).slice(0, 16);
+  return "rcpt_" + sha256Hex(recordLeaf(record) + record.signature).slice(0, 16);
 }
 
 export interface StoredReceipt {

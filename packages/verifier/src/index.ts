@@ -1,7 +1,8 @@
 import {
   verifyReceipt,
   verifyMerkleProof,
-  receiptLeaf,
+  recordLeaf,
+  verifyVerdict,
   type Receipt,
   type ReceiptRecord,
 } from "@veritrace/core";
@@ -14,6 +15,9 @@ export interface VerificationResult {
     signature: boolean;
     /** true only when an anchor is present AND its Merkle inclusion proof checks out. */
     anchored: boolean;
+    /** true when a verdict is present and its judge signature checks out,
+     *  false when present but bad, null when there is no verdict at all. */
+    verdict: boolean | null;
   };
   error?: string;
 }
@@ -47,7 +51,7 @@ export function verifyRecord(record: ReceiptRecord): VerificationResult {
   if (!isWellFormed(record)) {
     return {
       ok: false,
-      checks: { signature: false, anchored: false },
+      checks: { signature: false, anchored: false, verdict: null },
       error: "malformed receipt record",
     };
   }
@@ -57,18 +61,37 @@ export function verifyRecord(record: ReceiptRecord): VerificationResult {
   let anchored = false;
   if (record.anchor?.merkleRoot && Array.isArray(record.anchor.merkleProof)) {
     anchored = verifyMerkleProof(
-      receiptLeaf(record.receipt),
+      recordLeaf(record),
       record.anchor.merkleProof,
       record.anchor.merkleRoot,
     );
   }
 
+  // A verdict must carry its own signature. A record that has a verdict but no
+  // signature over it is a record whose judgment cannot be trusted — treat that
+  // as a failure, not as "no verdict".
+  let verdict: boolean | null = null;
+  if (record.verdict) {
+    verdict =
+      typeof record.verdictSignature === "string" &&
+      typeof record.verdictPublicKey === "string"
+        ? verifyVerdict(record.receipt, record.verdict, record.verdictSignature, record.verdictPublicKey)
+        : false;
+  }
+
   const hasAnchor = Boolean(record.anchor);
-  const ok = signature && (!hasAnchor || anchored);
+  const ok = signature && (!hasAnchor || anchored) && verdict !== false;
+
+  const error =
+    hasAnchor && !anchored
+      ? "anchor present but Merkle inclusion proof is invalid"
+      : verdict === false
+        ? "verdict signature missing or invalid — the assessment cannot be trusted"
+        : undefined;
 
   return {
     ok,
-    checks: { signature, anchored },
-    ...(hasAnchor && !anchored ? { error: "anchor present but Merkle inclusion proof is invalid" } : {}),
+    checks: { signature, anchored, verdict },
+    ...(error ? { error } : {}),
   };
 }

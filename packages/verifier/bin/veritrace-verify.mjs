@@ -58,6 +58,19 @@ console.log(
 );
 console.log(`  ${txId ? "✅" : "⚪"} anchor     (${backendLabel}${txId ? `: ${txId}` : ""})`);
 
+if (record?.verdict) {
+  const v = record.verdict;
+  const mark2 = result.checks.verdict ? "✅" : "❌";
+  console.log(
+    `  ${mark2} verdict    (${v.assessment}, confidence ${v.confidence}, judge ${v.judge})`,
+  );
+  if (result.checks.verdict === false) {
+    console.log(`     ✗ this verdict is NOT signed by the judge key in the record`);
+  }
+} else {
+  console.log(`  ⚪ verdict    (none attached)`);
+}
+
 // Online: prove the root on Arweave is the root in this receipt.
 let onlineOk = null;
 if (online) {

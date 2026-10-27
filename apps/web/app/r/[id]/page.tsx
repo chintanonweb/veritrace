@@ -89,11 +89,26 @@ export default async function VerifyPage({ params }: { params: Promise<{ id: str
               <small>{anchor ? "provably part of an anchored batch" : "not yet anchored"}</small>
             </span>
           </div>
+          {record.verdict && (
+            <div className="check">
+              <span className={`ic ${v.checks.verdict ? "ok" : "bad"}`}>
+                {v.checks.verdict ? "✓" : "✗"}
+              </span>
+              <span className="lbl">
+                Verdict signature
+                <small>
+                  {v.checks.verdict
+                    ? `${record.verdict.assessment} · confidence ${record.verdict.confidence} · judge ${record.verdict.judge}`
+                    : "verdict was altered after the judge signed it"}
+                </small>
+              </span>
+            </div>
+          )}
           <div className="check">
             <span className={`ic ${anchor?.arweaveTxId ? "ok" : "wait"}`}>{anchor?.arweaveTxId ? "✓" : "○"}</span>
             <span className="lbl">
               Permanence
-              <small>{anchor?.arweaveTxId ? "Arweave + on-chain root" : "Arweave/chain publish: roadmap"}</small>
+              <small>{anchor?.arweaveTxId ? "published to Arweave" : "local Merkle root (not yet published)"}</small>
             </span>
           </div>
 

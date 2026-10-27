@@ -4,7 +4,7 @@ import {
   signReceipt,
   sha256Hex,
   verifyMerkleProof,
-  receiptLeaf,
+  recordLeaf,
   type Receipt,
   type ReceiptRecord,
 } from "@veritrace/core";
@@ -43,15 +43,15 @@ describe("anchorBatch", () => {
   it("produces a valid inclusion proof for every anchored receipt", async () => {
     const out = await anchorBatch([record(1), record(2), record(3), record(4)], local);
     for (const r of out) {
-      const ok = verifyMerkleProof(receiptLeaf(r.receipt), r.anchor!.merkleProof, r.anchor!.merkleRoot);
+      const ok = verifyMerkleProof(recordLeaf(r), r.anchor!.merkleProof, r.anchor!.merkleRoot);
       expect(ok).toBe(true);
     }
   });
 
   it("breaks the inclusion proof if a receipt is altered after anchoring", async () => {
     const [r] = await anchorBatch([record(1), record(2)], local);
-    const tampered = { ...r.receipt, outputHash: sha256Hex("denied") };
-    expect(verifyMerkleProof(receiptLeaf(tampered), r.anchor!.merkleProof, r.anchor!.merkleRoot)).toBe(false);
+    const tampered = { ...r, receipt: { ...r.receipt, outputHash: sha256Hex("denied") } };
+    expect(verifyMerkleProof(recordLeaf(tampered), r.anchor!.merkleProof, r.anchor!.merkleRoot)).toBe(false);
   });
 
   it("records which backend published the root", async () => {

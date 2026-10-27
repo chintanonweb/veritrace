@@ -5,7 +5,8 @@ import {
   sha256Hex,
   buildMerkleRoot,
   getMerkleProof,
-  receiptLeaf,
+  recordLeaf,
+  signVerdict,
   type Receipt,
   type ReceiptRecord,
 } from "@veritrace/core";
@@ -13,7 +14,7 @@ import { verifyRecord, type VerificationResult } from "./index.js";
 
 /** Anchor a record against a one-leaf Merkle root, the way @veritrace/anchor does. */
 function anchor(rec: ReturnType<typeof signedRecord>): ReceiptRecord {
-  const leaves = [receiptLeaf(rec.receipt)];
+  const leaves = [recordLeaf(rec)];
   return {
     ...rec,
     anchor: { merkleRoot: buildMerkleRoot(leaves), merkleProof: getMerkleProof(leaves, 0), leafIndex: 0 },
@@ -92,3 +93,55 @@ describe("verifyRecord", () => {
     expect(result.checks.anchored).toBe(false);
   });
 });
+
+describe("verifyRecord — signed verdicts", () => {
+  const judge = generateKeypair();
+
+  function recordWithVerdict(assessment: "correct" | "incorrect" = "incorrect") {
+    const rec = signedRecord();
+    const verdict = { assessment, confidence: 0.93, judge: "qwen2.5-7b-judge" } as const;
+    return {
+      ...rec,
+      verdict,
+      verdictSignature: signVerdict(rec.receipt, verdict, judge.privateKey),
+      verdictPublicKey: judge.publicKey,
+    };
+  }
+
+  it("accepts a record whose verdict signature checks out", () => {
+    const result = verifyRecord(recordWithVerdict());
+    expect(result.checks.verdict).toBe(true);
+    expect(result.ok).toBe(true);
+  });
+
+  it("rejects a record whose verdict was flipped after the fact", () => {
+    const rec = recordWithVerdict("incorrect");
+    const flipped = { ...rec, verdict: { ...rec.verdict, assessment: "correct" as const } };
+    const result = verifyRecord(flipped);
+    expect(result.checks.verdict).toBe(false);
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain("verdict signature");
+  });
+
+  it("rejects a record carrying a verdict with no signature at all", () => {
+    const rec = recordWithVerdict();
+    const { verdictSignature, verdictPublicKey, ...unsigned } = rec;
+    const result = verifyRecord(unsigned as ReceiptRecord);
+    expect(result.checks.verdict).toBe(false);
+    expect(result.ok).toBe(false);
+  });
+
+  it("reports verdict: null when there is simply no verdict", () => {
+    const result = verifyRecord(anchored_signed());
+    expect(result.checks.verdict).toBeNull();
+  });
+});
+
+function anchored_signed() {
+  const rec = signedRecord();
+  const leaves = [recordLeaf(rec)];
+  return {
+    ...rec,
+    anchor: { merkleRoot: buildMerkleRoot(leaves), merkleProof: getMerkleProof(leaves, 0), leafIndex: 0 },
+  };
+}

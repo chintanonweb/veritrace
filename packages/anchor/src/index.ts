@@ -1,7 +1,7 @@
 import {
   buildMerkleRoot,
   getMerkleProof,
-  receiptLeaf,
+  recordLeaf,
   type ReceiptRecord,
 } from "@veritrace/core";
 
@@ -38,7 +38,9 @@ export async function anchorBatch(
 ): Promise<ReceiptRecord[]> {
   if (records.length === 0) throw new Error("cannot anchor an empty batch");
 
-  const leaves = records.map((r) => receiptLeaf(r.receipt));
+  // recordLeaf folds the eval verdict in when present, so the anchored root
+  // commits to the judgment and not just the action.
+  const leaves = records.map((r) => recordLeaf(r));
   const merkleRoot = buildMerkleRoot(leaves);
   const ref = await backend.publish(merkleRoot);
 

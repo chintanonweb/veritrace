@@ -10,6 +10,9 @@ import {
   getMerkleProof,
   verifyMerkleProof,
   receiptLeaf,
+  recordLeaf,
+  signVerdict,
+  verifyVerdict,
   type Receipt,
 } from "./index.js";
 
@@ -150,5 +153,80 @@ describe("merkle proofs", () => {
     const one = [sha256Hex("solo")];
     const root = buildMerkleRoot(one);
     expect(verifyMerkleProof(one[0], getMerkleProof(one, 0), root)).toBe(true);
+  });
+});
+
+describe("signed verdicts", () => {
+  const receipt: Receipt = {
+    agent: "support-bot",
+    traceId: "t1",
+    action: "refund.approve",
+    model: "gpt-4o",
+    modelVersion: "gpt-4o-2026-05-01",
+    inputHash: sha256Hex("order #123"),
+    outputHash: sha256Hex("approved"),
+    createdAt: "2026-06-24T00:00:00.000Z",
+  };
+  const verdict: EvalVerdict = { assessment: "incorrect", confidence: 0.94, judge: "qwen2.5-7b-judge" };
+
+  it("verifies a verdict signed by the judge key", () => {
+    const { privateKey, publicKey } = generateKeypair();
+    const sig = signVerdict(receipt, verdict, privateKey);
+    expect(verifyVerdict(receipt, verdict, sig, publicKey)).toBe(true);
+  });
+
+  it("rejects a verdict that was flipped from incorrect to correct", () => {
+    const { privateKey, publicKey } = generateKeypair();
+    const sig = signVerdict(receipt, verdict, privateKey);
+    const flipped: EvalVerdict = { ...verdict, assessment: "correct" };
+    expect(verifyVerdict(receipt, flipped, sig, publicKey)).toBe(false);
+  });
+
+  it("rejects a verdict whose confidence was nudged", () => {
+    const { privateKey, publicKey } = generateKeypair();
+    const sig = signVerdict(receipt, verdict, privateKey);
+    expect(verifyVerdict(receipt, { ...verdict, confidence: 0.99 }, sig, publicKey)).toBe(false);
+  });
+
+  it("rejects a verdict replayed onto a different receipt", () => {
+    const { privateKey, publicKey } = generateKeypair();
+    const sig = signVerdict(receipt, verdict, privateKey);
+    const other: Receipt = { ...receipt, outputHash: sha256Hex("denied") };
+    expect(verifyVerdict(other, verdict, sig, publicKey)).toBe(false);
+  });
+
+  it("rejects a verdict signed by a different judge key", () => {
+    const a = generateKeypair();
+    const b = generateKeypair();
+    const sig = signVerdict(receipt, verdict, a.privateKey);
+    expect(verifyVerdict(receipt, verdict, sig, b.publicKey)).toBe(false);
+  });
+});
+
+describe("recordLeaf", () => {
+  const receipt: Receipt = {
+    agent: "support-bot",
+    traceId: "t1",
+    action: "refund.approve",
+    model: "gpt-4o",
+    modelVersion: "gpt-4o-2026-05-01",
+    inputHash: sha256Hex("in"),
+    outputHash: sha256Hex("out"),
+    createdAt: "2026-06-24T00:00:00.000Z",
+  };
+
+  it("equals receiptLeaf when there is no verdict (existing roots unaffected)", () => {
+    expect(recordLeaf({ receipt, signature: "s", publicKey: "p" })).toBe(receiptLeaf(receipt));
+  });
+
+  it("changes when the verdict changes, so a tampered verdict breaks inclusion", () => {
+    const base = {
+      receipt,
+      signature: "s",
+      publicKey: "p",
+      verdict: { assessment: "incorrect", confidence: 0.9, judge: "j" } as EvalVerdict,
+    };
+    const flipped = { ...base, verdict: { ...base.verdict, assessment: "correct" } as EvalVerdict };
+    expect(recordLeaf(base)).not.toBe(recordLeaf(flipped));
   });
 });

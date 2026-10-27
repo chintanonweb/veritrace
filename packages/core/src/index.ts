@@ -53,13 +53,22 @@ export interface EvalVerdict {
 
 /** A signed receipt plus the public key to verify it, optionally anchored and
  *  optionally carrying an eval verdict. The independently-verifiable unit
- *  shared across SDK, anchor, verifier, and score. */
+ *  shared across SDK, anchor, verifier, and score.
+ *
+ *  The verdict carries its OWN signature, made by the judge's key over
+ *  (receipt leaf ‖ verdict). Without it the verdict would sit outside the
+ *  receipt signature and could be flipped from `incorrect` to `correct`
+ *  without invalidating anything — which would defeat the point. */
 export interface ReceiptRecord {
   receipt: Receipt;
   signature: string;
   publicKey: string;
   anchor?: AnchorProof;
   verdict?: EvalVerdict;
+  /** Ed25519 signature by the judge over (receiptLeaf ‖ verdict). */
+  verdictSignature?: string;
+  /** The judge's public key, so the verdict can be checked by anyone. */
+  verdictPublicKey?: string;
 }
 
 /** Deterministic JSON: object keys sorted recursively. */
@@ -116,6 +125,48 @@ export function verifyReceipt(
 /** Canonical Merkle leaf for a receipt: sha256 of its canonical form. */
 export function receiptLeaf(receipt: Receipt): string {
   return sha256Hex(canonicalize(receipt));
+}
+
+/**
+ * The leaf that actually goes into the Merkle tree for a record. When a verdict
+ * is present it is folded in, so the anchored root covers the judgment as well
+ * as the action: you cannot change "incorrect" to "correct" and keep a valid
+ * inclusion proof. Records with no verdict produce exactly `receiptLeaf(receipt)`,
+ * so existing proofs and roots are unaffected.
+ */
+export function recordLeaf(record: ReceiptRecord): string {
+  if (!record.verdict) return receiptLeaf(record.receipt);
+  return sha256Hex(canonicalize({ receipt: record.receipt, verdict: record.verdict }));
+}
+
+/** Canonical bytes a judge signs: binds the verdict to one specific receipt. */
+export function verdictPayload(receipt: Receipt, verdict: EvalVerdict): string {
+  return canonicalize({ receiptLeaf: receiptLeaf(receipt), verdict });
+}
+
+/** Sign a verdict with the judge's Ed25519 key. */
+export function signVerdict(
+  receipt: Receipt,
+  verdict: EvalVerdict,
+  judgePrivateKeyHex: string,
+): string {
+  const msg = utf8ToBytes(verdictPayload(receipt, verdict));
+  return bytesToHex(ed25519.sign(msg, hexToBytes(judgePrivateKeyHex)));
+}
+
+/** Verify a verdict signature against the judge's public key. */
+export function verifyVerdict(
+  receipt: Receipt,
+  verdict: EvalVerdict,
+  signatureHex: string,
+  judgePublicKeyHex: string,
+): boolean {
+  try {
+    const msg = utf8ToBytes(verdictPayload(receipt, verdict));
+    return ed25519.verify(hexToBytes(signatureHex), msg, hexToBytes(judgePublicKeyHex));
+  } catch {
+    return false;
+  }
 }
 
 /** sha256 of two concatenated hex nodes → hex. */
