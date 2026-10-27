@@ -55,7 +55,7 @@ export async function anchorBatch(
   }));
 }
 
-export type AnchorKind = "local" | "arweave" | "chain";
+export type AnchorKind = "local" | "turbo" | "arweave" | "chain";
 
 /**
  * Select an anchor backend by name (defaults to env `VERITRACE_ANCHOR`, else
@@ -66,7 +66,13 @@ export async function createAnchorBackend(
   kind: AnchorKind = (process.env.VERITRACE_ANCHOR as AnchorKind) || "local",
 ): Promise<AnchorBackend> {
   switch (kind) {
+    case "turbo": {
+      // Free for payloads under 105 KiB — no AR tokens needed. Use this one.
+      const { TurboAnchorBackend } = await import("./backends/turbo");
+      return new TurboAnchorBackend();
+    }
     case "arweave": {
+      // Raw arweave.transactions.post — needs a wallet funded with AR.
       const { ArweaveAnchorBackend } = await import("./backends/arweave");
       return new ArweaveAnchorBackend();
     }

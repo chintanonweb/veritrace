@@ -8,3 +8,6 @@ examples/out/
 .env
 .env.local
 .DS_Store
+
+# Arweave anchoring wallet (never commit)
+.veritrace/

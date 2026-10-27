@@ -7,9 +7,13 @@
   "scripts": {
     "test": "pnpm -r test",
     "build": "pnpm -r build",
-    "demo": "tsx examples/refund-demo.mjs"
+    "demo": "tsx examples/refund-demo.mjs",
+    "anchor:init": "tsx scripts/anchor-init.mjs",
+    "anchor:arweave": "tsx scripts/anchor-receipt-arweave.mjs"
   },
   "devDependencies": {
+    "@ardrive/turbo-sdk": "^2.1.2",
+    "arweave": "^1.15.5",
     "tsx": "^4.19.0"
   },
   "license": "MIT"
