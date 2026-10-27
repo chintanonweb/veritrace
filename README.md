@@ -8,7 +8,9 @@
 
 Payments have receipts. AI decisions should too.
 
-[![tests](https://img.shields.io/badge/core_tests-14%2F14_passing-brightgreen)](#status)
+[![tests](https://img.shields.io/badge/tests-64%2F64_passing-brightgreen)](#status)
+[![CI](https://github.com/chintanonweb/veritrace/actions/workflows/ci.yml/badge.svg)](https://github.com/chintanonweb/veritrace/actions/workflows/ci.yml)
+[![live demo](https://img.shields.io/badge/live_demo-veritrace--pearl.vercel.app-000)](https://veritrace-pearl.vercel.app/)
 [![license](https://img.shields.io/badge/license-MIT-blue)](#license)
 [![verifiable AI](https://img.shields.io/badge/category-verifiable_AI-7c3aed)](#how-it-works)
 
@@ -154,6 +156,36 @@ A public **receipt ledger** with live verification, and a shareable verify page 
 |---|---|---|
 | ![home](docs/screenshot-home.png) | ![verified](docs/screenshot-verified.png) | ![altered](docs/screenshot-altered.png) |
 
+---
+
+## Anchor to Arweave for real — free, no AR needed
+
+Turbo (ar.io) subsidises data items under 105 KiB, and a Merkle root payload is ~150 bytes, so anchoring costs nothing and needs no funded wallet. The root lands on Arweave permanently either way — Turbo changes the payment path, not the permanence.
+
+```bash
+pnpm anchor:init                                  # mint a wallet (no AR required)
+pnpm demo                                         # produce a signed receipt
+pnpm anchor:arweave examples/out/receipt.json     # publish the root to Arweave
+```
+
+Verify it against the network — no VeriTrace account, no call to our servers:
+
+```bash
+npx tsx packages/verifier/bin/veritrace-verify.mjs --online examples/out/receipt.json
+```
+
+```
+  ✅ signature  (Ed25519, tamper-proof)
+  ✅ merkle     (inclusion proof verified against root 509f022832ec6575…)
+  ✅ anchor     (arweave-turbo: VV9SFUJvZn8Rxx4EMdp3uua9zuS0-wMwPeDnLdGSinA)
+  ✅ on-arweave (root fetched from https://ar-io.dev)
+     published root: 509f022832ec6575e1cd6e39ec1b988eef6ac88c7014984f9e2705dc389c081f
+     receipt root:   509f022832ec6575e1cd6e39ec1b988eef6ac88c7014984f9e2705dc389c081f
+  ✅ VERIFIED — this is exactly what the AI did. No trust in VeriTrace required.
+```
+
+> Note: `arweave.net` can 404 a Turbo item while it propagates; `ar-io.dev` and `turbo-gateway.com` serve it immediately.
+
 ### The integration is 3 lines
 
 ```ts
@@ -175,7 +207,9 @@ Anyone verifies it — no VeriTrace account needed:
 veritrace-verify receipt.json   # ✅ signature ok  ·  ⚪ anchored (Arweave + chain: roadmap)
 ```
 
-> ⚠️ **Status:** signing, the `wrap()` SDK, **Merkle anchoring + inclusion proofs**, and independent verification are implemented and tested (**40/40**). Publishing the batch root to **Arweave** and **Base Sepolia** is implemented as pluggable backends (`@veritrace/anchor`) and is credential-gated — it needs a funded testnet wallet / Arweave JWK to run live. The hosted dashboard is next — see [Roadmap](#roadmap).
+> ✅ **Status:** signing, the `wrap()` SDK, **Merkle anchoring + inclusion proofs**, and independent verification are implemented and tested (**64/64**). Receipts anchor to **Arweave for real and for free** via the Turbo backend — no AR tokens needed, because Merkle-root payloads sit far below Turbo's 105 KiB free tier. The verifier's `--online` mode fetches the published root back from a public gateway and compares it to the receipt, so "anchored" means *confirmed against the network*, not asserted by us. On-chain roots (Base Sepolia) remain implemented but credential-gated.
+>
+> 🧪 **Live demo:** [veritrace-pearl.vercel.app](https://veritrace-pearl.vercel.app/) — the ledger is seeded with **synthetic receipts** (`apps/web/lib/seed.ts`) so the UI has data to show; the signatures, Merkle proofs and scores on them are computed for real, but the underlying decisions are generated, not customer traffic. Anchoring is real.
 
 ---
 
@@ -232,8 +266,10 @@ cd packages/core && pnpm test    # 14 passing
 - ✅ `@veritrace/score` — Verified AI Score leaderboard (per-agent reliability)
 - ✅ `@veritrace/web` — ingestion API, receipt ledger, leaderboard, public verify pages (no DB)
 - ✅ `@veritrace/eval-judge` — LLM-as-judge worker, deployable on Nosana decentralized GPU
+- ✅ **Live Arweave anchoring** via Turbo (free, no AR) + `--online` network verification
 - ✅ Runnable end-to-end demo (`pnpm demo`)
-- ⏳ Live Arweave/chain anchoring (credential-gated) · Postgres persistence · `sdk-py`
+- ✅ MIT `LICENSE` file + GitHub Actions CI (tests + tamper demo)
+- ⏳ On-chain (Base Sepolia) anchoring (credential-gated) · Postgres persistence · `sdk-py`
 
 ---
 
@@ -241,7 +277,7 @@ cd packages/core && pnpm test    # 14 passing
 
 1. **SDK** (`wrap()`) + ingestion API (signature-verified receipts)
 2. **Eval worker** — signed verdicts (Nosana / Ollama)
-3. **Anchoring** — Merkle batches → Arweave + on-chain root
+3. **Anchoring** — Merkle batches → Arweave ✅ (Turbo, free) · on-chain root (credential-gated)
 4. **Verifier CLI** — independent, zero-trust verification
 5. **Dashboard** — receipts, leaderboard, public verify pages ✅ (Postgres persistence next)
 6. **Verified AI Score** — reputation layer & leaderboards ✅ → framework adapters → zkML verdicts → insurance-evidence exports → open receipt standard (RFC)
