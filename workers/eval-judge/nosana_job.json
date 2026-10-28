@@ -3,7 +3,9 @@
   "type": "container",
   "meta": {
     "trigger": "dashboard",
-    "system_requirements": { "required_vram": 16 }
+    "system_requirements": {
+      "required_vram": 16
+    }
   },
   "ops": [
     {
@@ -12,7 +14,9 @@
       "args": {
         "image": "ollama/ollama:latest",
         "gpu": true,
-        "cmd": ["serve"],
+        "cmd": [
+          "serve"
+        ],
         "expose": [
           {
             "port": 11434,
@@ -28,25 +32,35 @@
           }
         ]
       },
-      "execution": { "group": "llm" }
+      "execution": {
+        "group": "llm"
+      }
     },
     {
       "type": "container/run",
       "id": "model-pull",
       "args": {
         "image": "curlimages/curl:latest",
-        "entrypoint": ["/bin/sh", "-c"],
+        "entrypoint": [
+          "/bin/sh",
+          "-c"
+        ],
         "cmd": [
           "curl -sS -X POST http://judge-llm:11434/api/pull -d '{\"name\":\"qwen2.5:7b\",\"stream\":false}' && echo model-ready"
         ]
       },
-      "execution": { "group": "llm", "depends_on": ["judge-llm"] }
+      "execution": {
+        "group": "llm",
+        "depends_on": [
+          "judge-llm"
+        ]
+      }
     },
     {
       "type": "container/run",
       "id": "eval-judge",
       "args": {
-        "image": "docker.io/chintanonweb/veritrace-eval-judge:latest",
+        "image": "ghcr.io/chintanonweb/veritrace-eval-judge:latest",
         "env": {
           "EVAL_LLM_BASE_URL": "http://judge-llm:11434/v1",
           "EVAL_LLM_MODEL": "qwen2.5:7b",
@@ -68,7 +82,13 @@
           }
         ]
       },
-      "execution": { "group": "judge", "depends_on": ["judge-llm", "model-pull"] }
+      "execution": {
+        "group": "judge",
+        "depends_on": [
+          "judge-llm",
+          "model-pull"
+        ]
+      }
     }
   ]
 }

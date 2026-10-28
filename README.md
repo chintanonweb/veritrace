@@ -269,6 +269,33 @@ cd packages/core && pnpm test    # 14 passing
 
 ---
 
+## Measure the judge, don't just demo it
+
+One verdict proves the loop closes. It tells you nothing about whether the judge
+is *right*, how fast it is warm, or what a decision costs at scale.
+
+```bash
+EVAL_LLM_BASE_URL=https://<endpoint>/v1 \
+EVAL_LLM_MODEL=qwen2.5:7b \
+GPU_USD_PER_HOUR=0.19 \
+pnpm judge:batch
+```
+
+Runs 24 labelled decisions — refunds over a policy cap, oversized trades, deploys
+with failing tests, expired identity documents — whose ground truth is **computed
+from the inputs, never written by the model under test**. Every verdict is signed
+by a separate judge key and sealed into a receipt, so the report is evidence.
+
+It reports:
+
+- **agreement** against ground truth, plus **false negatives** — the dangerous
+  class, where a decision broke policy and the judge called it fine
+- **cold call vs warm p50/p95** latency
+- **settled cost per decision** at a given GPU rate
+- a JSON artifact under `examples/out/batch-*.json`
+
+It exits non-zero if the judge passes any policy violation, so it can gate CI.
+
 ## Status
 
 - ✅ Monorepo scaffolded (pnpm workspace), **75/75 tests passing**, web app builds clean

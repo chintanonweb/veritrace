@@ -1,0 +1,62 @@
+name: publish-judge-image
+
+# Builds the eval-judge container and publishes it to GitHub Container Registry,
+# so `workers/eval-judge/nosana_job.json` can pull it on Nosana without anyone
+# building or pushing locally.
+#
+# Uses the workflow's own GITHUB_TOKEN — no registry secrets to store or share.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "workers/eval-judge/**"
+      - "packages/core/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/publish-judge.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: workers/eval-judge/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/veritrace-eval-judge:latest
+            ghcr.io/${{ github.repository_owner }}/veritrace-eval-judge:${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.description=VeriTrace LLM-as-judge — signs verdicts onto verifiable receipts
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Summary
+        run: |
+          echo "### Judge image published" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "ghcr.io/${{ github.repository_owner }}/veritrace-eval-judge:${{ github.sha }}" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**One manual step:** the package is private by default. On GitHub → your profile → **Packages** → \`veritrace-eval-judge\` → **Package settings** → **Change visibility** → **Public**, or Nosana will fail to pull it." >> "$GITHUB_STEP_SUMMARY"

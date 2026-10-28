@@ -2,7 +2,7 @@
   "name": "veritrace",
   "private": true,
   "version": "0.0.1",
-  "description": "The flight recorder for AI agents — cryptographic receipts for every decision your AI makes.",
+  "description": "The flight recorder for AI agents \u2014 cryptographic receipts for every decision your AI makes.",
   "type": "module",
   "scripts": {
     "test": "pnpm -r test",
@@ -10,7 +10,8 @@
     "demo": "tsx examples/refund-demo.mjs",
     "anchor:init": "tsx scripts/anchor-init.mjs",
     "anchor:arweave": "tsx scripts/anchor-receipt-arweave.mjs",
-    "judge:smoke": "tsx scripts/judge-smoke.mjs"
+    "judge:smoke": "tsx scripts/judge-smoke.mjs",
+    "judge:batch": "tsx scripts/judge-batch.mjs"
   },
   "devDependencies": {
     "@ardrive/turbo-sdk": "^2.1.2",
